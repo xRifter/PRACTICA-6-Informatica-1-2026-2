@@ -2,17 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def plot_data(data, regression_line, years):
-  '''
-  Grafica los datos y la Regresión Lineal
-  Parametros:
-    data (list): Lista bidimensional con datos historicos de acuerdo al archivo csv
-                 de la forma [[año1, #estudiantes], [año2, #estudiantes]...]
-    regression_line(list): Lista de los valores y para la regresión lineal.
-    years(list): Lista de años entre 1980 y 2024
-  
-  Para usarla es necesario usar las librerías numpy y matplotlib.pyplot
-  Revise que las librerías se encuentren instaladas en su entorno de trabajo.
-  '''
+
   data = np.array(data)
 
   plt.figure(figsize=(10, 6))
