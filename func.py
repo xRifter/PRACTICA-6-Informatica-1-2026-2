@@ -94,3 +94,201 @@ def load_error(filen,texto, linea = None):
     return False
 
 #    filehist = open('./hist_matriculados.csv', mode='r', encoding='utf-8')
+
+def eliminar_elemento(lista,indice):
+    if indice > -1:
+        lista[indice:] = lista[indice+1:]
+        return True
+    else:
+        return False
+
+def buscar_indice(lista,elem):
+    indice = 0
+    for x in lista:
+        if x == elem:
+            return indice
+        indice+=1
+    return "ND"
+
+
+#Validar si el input es valido recorriendo una lista o listas anidadas
+def validarL(strinput,datosvalidos=["si","no","s","n"],digito=None):
+    invalido = True
+    while invalido:
+        opt = str(input(strinput)).lower()
+        for elemento in datosvalidos:
+            iterable = (type(elemento) != type("a"))
+            if iterable:
+                if digito:
+                    if opt.isdigit() and opt in elemento:
+                        return opt
+                else:
+                    if opt in elemento:
+                        return opt
+        if digito:
+            if opt.isdigit() and opt in datosvalidos:
+                return opt
+        else:
+            if opt in datosvalidos:
+                return opt
+        print("Entrada invalida.")
+
+#Imprimir tabla, traido de la practica 5:
+def imprimir_tabla(tabla, ancho, encabezado=None):  
+    ''' 
+    Imprime en pantalla un tabla con los datos pasados, ajustado a los tamaños deseados.
+    
+    Argumentos:
+        tabla: Lista que representa la tabla. Cada elemento es una fila
+        ancho: Lista con el tamaño deseado para cada columna. Si se especifica
+            un entero, todas las columnas quedan de ese tamaño
+        encabezado: Lista con el encabezado de la tabla
+    '''
+    def dividir_fila(ancho,sep='-'):
+        '''
+        ancho: Lista con el tamaño de cada columna
+        sep: Caracter con el que se van a formar las líneas que 
+            separan las filas
+        '''
+        linea = ''
+        for i in range(len(ancho)):
+            linea += ('+'+sep*(ancho[i]-1))
+        linea = linea[:-1]+'+'
+        print(linea)
+        
+    def imprimir_celda(texto, impresos, relleno):
+        '''
+        texto: Texto que se va a colocar en la celda
+        impresos: cantidad de caracteres ya impresos del texto
+        relleno: cantidad de caracteres que se agregan automáticamente,
+            para separar los textos del borde de las celda.
+        '''        
+        # Imprimir celda
+        texto = str(texto)
+        texto = texto.replace('\n',' ').replace('\t',' ')
+        if impresos+relleno < len(texto):
+            print(texto[impresos:impresos+relleno],end='')
+            impresos+=relleno
+        elif impresos >= len(texto):
+            print(' '*(relleno),end='')
+        else:
+            print(texto[impresos:], end='')
+            print(' '*(relleno-(len(texto) - impresos)),end='')
+            impresos = len(texto)
+        return impresos
+    
+    def imprimir_fila(fila):
+        '''
+        fila: Lista con los textos de las celdas de la fila
+        '''
+        impresos = []   
+        alto = 1
+        for i in range(len(fila)):
+            impresos.append(0)
+            if type(fila[i]) == type(0.0):
+                texto = '{:7.2f}'.format(fila[i])
+            else:
+                texto = str(fila[i])
+            alto1 = len(texto)//(ancho[i]-4)
+            if len(texto)%(ancho[i]-4) != 0:
+                alto1+=1
+            if alto1 > alto:
+                alto = alto1
+        for i in range(alto):
+            print('| ',end='')
+            for j in range(len(fila)):
+                relleno = ancho[j]-3
+                if j == len(fila)-1:
+                    relleno = ancho[j] -4
+                    impresos[j] = imprimir_celda(fila[j], impresos[j], relleno)
+                    print(' |')
+                else:
+                    impresos[j] = imprimir_celda(fila[j], impresos[j], relleno)
+                    print(' | ',end='')   
+    if not len(tabla) > 0:
+        return
+    if not type(tabla[0]) is list:
+        return
+    ncols = len(tabla[0])
+    if type(ancho) == type(0):
+        ancho = [ancho+3]*ncols 
+    elif type(ancho) is list:
+        for i in range(len(ancho)):
+            ancho[i]+=3
+    else:
+        print('Error. El ancho debe ser un entero o una lista de enteros')
+        return
+    assert len(ancho) == ncols, 'La cantidad de columnas no coincide con los tamaños dados'
+    ancho[-1] += 1
+    if encabezado != None:
+        dividir_fila(ancho,'=')
+        imprimir_fila(encabezado)
+        dividir_fila(ancho,'=')
+    else:
+        dividir_fila(ancho)
+    for fila in tabla:
+        imprimir_fila(fila)
+        dividir_fila(ancho)
+
+def save_notes(cursos, estudiantes, notas, p = False):
+    filename = './notas_estudiantes.csv'
+    #abrir con with para cierre automatico
+    rr = open(filename,"r", encoding='utf-8')
+    repuesto = rr.read()
+    rr.close()
+    try:
+        with open(filename, mode='w', encoding='utf-8') as filenotas:
+            i = 0
+            for curso in cursos:
+                if i < len(cursos)-1:
+                    filenotas.write(curso+",")
+                else:
+                    filenotas.write(curso+"\n")
+                i += 1
+            i = 0
+            for doc in estudiantes:
+                if i < len(estudiantes)-1:
+                    filenotas.write(doc+",")
+                else:
+                    filenotas.write(doc+"\n")
+                i += 1
+            for lisnotas in notas:
+                i = 0
+                for nota in lisnotas:
+                    if i < len(lisnotas)-1:
+                        filenotas.write(str(nota)+",")
+                    else:
+                        filenotas.write(str(nota)+"\n")
+                    i += 1               
+    except Exception as e:
+        print("Ocurrio un error: ",e,"\nRestaurando el archivo...")
+        try:
+            filenotas = open(filename, mode='w', encoding='utf-8')
+            filenotas.write(repuesto)
+            filenotas.close()
+        except Exception as er:
+            print("ERROR FATAL: No se pudo restaurar el archivo: ",er)
+        else:
+            print("Archivo restaurado. No se elimino el estudiante.")
+        return False
+    else:
+        if p:
+            print("EXITO: Archivo notas_estudiantes.csv actualizado exitosamente!")
+        return True
+        
+#Traducir la tabla de notas (-1 para Cancelado, -2 para No matriculo)
+def traducir(estudiantes,notas):
+    notesprint = list()
+    i = 0
+    for estudiante in estudiantes:
+        notasclean = list()
+        for nota in notas[i]:
+            if nota == -1:
+                notasclean.append("Cancelada")
+            elif nota == -2:
+                notasclean.append("No Matriculó")
+            else:
+                notasclean.append(nota)
+        notesprint.append([estudiante]+notasclean)
+        i+=1
+    return notesprint
