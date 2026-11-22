@@ -1,6 +1,6 @@
 from func import *
 #notes lee un parametro booleano para imprimir si se importo correctamente o no.
-notes = load_notes(True)
+notes = load_notes()
 if notes:
     #Print para ensayar que todo se lea correctamente
     cursos, estudiantes, notas = notes

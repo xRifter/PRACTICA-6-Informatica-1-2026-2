@@ -5,8 +5,9 @@ def load_notes(p=False):
         cursos = list()
         estudiantes = list()
         notas = list()
+        filename = './notas_estudiantes.csv'
         #abrir con with para cierre automatico
-        with open('./notas_estudiantes.csv', mode='r', encoding='utf-8') as filenotas:
+        with open(filename, mode='r', encoding='utf-8') as filenotas:
             lact = 0 #Linea valida actual 
             lread = 0 #Linea actual del archivo
             for linea in filenotas:
@@ -36,7 +37,7 @@ def load_notes(p=False):
                         if curso:
                             cursos.append(curso)
                         else:
-                            return load_error("Hay espacios vacios en el encabezado de cursos", lread)
+                            return load_error(filename,"Hay espacios vacios en el encabezado de cursos", lread)
                     continue
 
                 #Obtener estudiantes
@@ -48,9 +49,9 @@ def load_notes(p=False):
                             if estudiante not in estudiantes:
                                 estudiantes.append(estudiante)
                             else:
-                                return load_error("Hay uno o varios valores repetidos en el encabezado de documentos", lread)    
+                                return load_error(filename,"Hay uno o varios valores repetidos en el encabezado de documentos", lread)    
                         else:
-                            return load_error("Hay espacios vacios", lread)    
+                            return load_error(filename,"Hay espacios vacios", lread)    
                     continue
 
                 #Obtener notas
@@ -60,37 +61,36 @@ def load_notes(p=False):
                         try:
                             nota = float(nota)
                         except ValueError:
-                            return load_error("Hay uno o varios valores invalidos que no son notas", lread)
+                            return load_error(filename,"Hay uno o varios valores invalidos que no son notas", lread)
                         if nota == -1 or nota == -2 or (0 <= nota <= 5.0):
                             fnota.append(nota)
                         else:
-                            return load_error("Hay nota(s) fuera del rango",lread)
+                            return load_error(filename,"Hay nota(s) fuera del rango",lread)
                     notas.append(fnota)
                 else:
-                    return load_error("La cantidad de notas no coincide con la cantidad de cursos",lread)
+                    return load_error(filename,"La cantidad de notas no coincide con la cantidad de cursos",lread)
             #Si el archivo solo tiene encabezado
             if lact < 3:
-                return load_error("El archivo no tiene notas o encabezado") 
+                return load_error(filename,"El archivo no tiene notas o encabezado") 
             #Si no corresponden la cantidad de filas de notas con la cantidad de estudiantes.
             if len(estudiantes) != (lact-2):
-                return load_error(f"La cantidad de estudiantes es {len(estudiantes)} y hay {lact-2} filas de notas")
+                return load_error(filename,f"La cantidad de estudiantes es {len(estudiantes)} y hay {lact-2} filas de notas")
                     
 
     except FileNotFoundError:
-        print("ERROR: El archivo notas_estudiantes.csv no existe.")
-        return False
+        return load_error(filename, "EL archivo no existe.")
     except Exception as er:
-        return load_error(f"Ocurrio un error desconocido al importar notas_estudiantes.csv: {er}")
+        return load_error(filename,f"Ocurrio un error desconocido al importar {filename}: {er}")
     else:
         if p:
             print("EXITO: Archivo notas_estudiantes.csv importado exitosamente!")
         return cursos, estudiantes, notas
 
-def load_error(texto, linea = None):
+def load_error(filen,texto, linea = None):
     if linea != None:
-        print(f"ERROR: El archivo notas_estudiantes.csv esta corrupto en la linea {linea}\n{texto}")
+        print(f"ERROR: El archivo {filen} esta corrupto en la linea {linea}\n{texto}")
     else:
-        print(f"ERROR: El archivo notas_estudiantes.csv esta corrupto\n{texto}")
+        print(f"ERROR: El archivo {filen} esta corrupto\n{texto}")
     return False
 
 #    filehist = open('./hist_matriculados.csv', mode='r', encoding='utf-8')
