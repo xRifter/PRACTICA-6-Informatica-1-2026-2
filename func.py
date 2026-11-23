@@ -1,11 +1,10 @@
 #Modulo para funciones y operaciones
 
-def load_notes(p=False):
+def load_notes(p=False,filename = './notas_estudiantes.csv'):
     try:
         cursos = list()
         estudiantes = list()
         notas = list()
-        filename = './notas_estudiantes.csv'
         #abrir con with para cierre automatico
         with open(filename, mode='r', encoding='utf-8') as filenotas:
             lact = 0 #Linea valida actual 
@@ -24,7 +23,7 @@ def load_notes(p=False):
 
                 #Limpiar cola
                 if not columnas[-1]:
-                    columnas.pop()
+                    eliminar_elemento(columnas,len(columnas)-1)
 
                 lact += 1
 
@@ -35,7 +34,10 @@ def load_notes(p=False):
                     for curso in columnas:
                         curso = curso.strip()
                         if curso:
-                            cursos.append(curso)
+                            if curso not in cursos:
+                                cursos.append(curso)
+                            else:
+                                return load_error(filename,"Hay uno o varios valores repetidos en el encabezado de cursos", lread)
                         else:
                             return load_error(filename,"Hay espacios vacios en el encabezado de cursos", lread)
                     continue
@@ -51,7 +53,7 @@ def load_notes(p=False):
                             else:
                                 return load_error(filename,"Hay uno o varios valores repetidos en el encabezado de documentos", lread)    
                         else:
-                            return load_error(filename,"Hay espacios vacios", lread)    
+                            return load_error(filename,"Hay espacios vacios en el encabezado de documentos", lread)    
                     continue
 
                 #Obtener notas
@@ -78,7 +80,7 @@ def load_notes(p=False):
                     
 
     except FileNotFoundError:
-        return load_error(filename, "EL archivo no existe.")
+        return load_error(filename)
     except Exception as er:
         return load_error(filename,f"Ocurrio un error desconocido al importar {filename}: {er}")
     else:
@@ -86,30 +88,42 @@ def load_notes(p=False):
             print("EXITO: Archivo notas_estudiantes.csv importado exitosamente!")
         return cursos, estudiantes, notas
 
-def load_error(filen,texto, linea = None):
+def load_error(filen,texto="\n", linea = None):
     if linea != None:
         print(f"ERROR: El archivo {filen} esta corrupto en la linea {linea}\n{texto}")
     else:
-        print(f"ERROR: El archivo {filen} esta corrupto\n{texto}")
+        print(f"ERROR: El archivo {filen} esta corrupto o no existe\n{texto}")
     return False
 
 #    filehist = open('./hist_matriculados.csv', mode='r', encoding='utf-8')
 
 def eliminar_elemento(lista,indice):
-    if indice > -1:
+    if indice > -1 and indice < len(lista):
         lista[indice:] = lista[indice+1:]
         return True
     else:
         return False
 
-def buscar_indice(lista,elem):
+def buscar_indice(lista,elem,r=False):
     indice = 0
-    for x in lista:
-        if x == elem:
-            return indice
-        indice+=1
-    return "ND"
-
+    if r:
+        indices = list()
+        for x in lista:
+            if x == elem:
+                indices.append(indice)
+            indice+=1
+        if len(indices) == 1:
+            return indices[0]
+        elif len(indices) > 1:
+            return indices
+        else:
+            return -1
+    else:
+        for x in lista:
+            if x == elem:
+                return indice
+            indice+=1
+        return -1
 
 #Validar si el input es valido recorriendo una lista o listas anidadas
 def validarL(strinput,datosvalidos=["si","no","s","n"],digito=None):
@@ -230,13 +244,14 @@ def imprimir_tabla(tabla, ancho, encabezado=None):
         imprimir_fila(fila)
         dividir_fila(ancho)
 
-def save_notes(cursos, estudiantes, notas, p = False):
-    filename = './notas_estudiantes.csv'
-    #abrir con with para cierre automatico
-    rr = open(filename,"r", encoding='utf-8')
-    repuesto = rr.read()
-    rr.close()
+def save_notes(cursos, estudiantes, notas, p = False,filename = './notas_estudiantes.csv'):
     try:
+        #Repuesto en caso de error:
+        rr = open(filename,"r", encoding='utf-8')
+        repuesto = rr.read()
+        rr.close()
+
+        #abrir con with para cierre automatico
         with open(filename, mode='w', encoding='utf-8') as filenotas:
             i = 0
             for curso in cursos:
@@ -259,7 +274,11 @@ def save_notes(cursos, estudiantes, notas, p = False):
                         filenotas.write(str(nota)+",")
                     else:
                         filenotas.write(str(nota)+"\n")
-                    i += 1               
+                    i += 1   
+
+    except FileNotFoundError:
+        return load_error(filename, "")
+
     except Exception as e:
         print("Ocurrio un error: ",e,"\nRestaurando el archivo...")
         try:
@@ -292,3 +311,15 @@ def traducir(estudiantes,notas):
         notesprint.append([estudiante]+notasclean)
         i+=1
     return notesprint
+
+def mayor(lista):
+    nmayor = lista[0]
+    c = 0
+    for elemento in lista:
+        if elemento > nmayor:
+            nmayor = elemento
+            c = 1
+        elif elemento == nmayor:
+            c+=1
+
+    return nmayor, c
