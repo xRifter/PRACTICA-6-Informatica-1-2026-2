@@ -2,7 +2,7 @@ from func import *
 menu = True
 notes = None
 while menu:
-    opt = validarL("Bienvenido al sistema, que deseas hacer (CAMBIAR TEXTO LUEGO)\n\n(1) Cargar notas\n(2) Eliminar un estudiante\n(3) Mayor nota de un estudiante\n(-1) Salir\n((7 DEBUGGEAR LOADER))\n",["1","2","3","4","5","-1","7"])
+    opt = validarL("Bienvenido al sistema, que deseas hacer?\n\n(1) Cargar notas\n(2) Eliminar un estudiante\n(3) Mayor nota de un estudiante\n(4) Ordenar estudiantes por promedio\n(-1) Salir\n((7 DEBUGGEAR LOADER))\n",["1","2","3","4","5","-1","7"])
     #OPT SALIDA
     if opt == "-1":
         break
@@ -14,8 +14,6 @@ while menu:
             cursos, estudiantes, notas = notes
             notesprint = traducir(estudiantes,notas)
             imprimir_tabla(notesprint,13,["Estudiante"]+cursos)
-        
-        print("\n")
 
     #OPT ELIMINAR ESTUDIANTE
     elif opt == "2":
@@ -58,8 +56,7 @@ while menu:
         print("Estudiantes registrados en el sistema:")
         for est in estudiantes:
             print(est)
-        qn = validarL("Digita el documento del estudiante a consultar (-1 para salir.):\n",estudiantes+["-1"])
-        print("\n")
+        qn = validarL("Digita el documento del estudiante a consultar (-1 para salir.):\n",estudiantes+["-1"],"\n")
         if qn == "-1":
             continue
         indest = buscar_indice(estudiantes,qn)
@@ -80,10 +77,46 @@ while menu:
                 print("La mayor nota del estudiante",qn,"es:",nmayor," en los cursos",curs)
         else:
             print("El estudiante no tiene materias matriculadas")
-        
-            
-        
-        print("\n")
+
+    elif opt == "4":
+        if not notes:
+            notes = load_notes(True)
+            if notes:
+                cursos, estudiantes, notas = notes
+            else:
+                continue
+
+        #Lista de pares (Promedio, Indice)
+        indprom = list()
+        id = 0
+        for estudiante in estudiantes:
+            c = 0
+            p = 0
+            for nota in notas[id]:
+                if nota>=0:
+                    p+=nota
+                    c+=1
+            if p > 0:
+                p = round(p/c,2)
+            indprom.append( (p, id) ) 
+            id+=1
+
+        #Ordenamiento con burbuja
+        if len(indprom) == len(estudiantes):
+            indprom, c = bubble_sort(indprom)
+            print("\nEXITO: LISTA DE ESTUDIANTES POR PROMEDIO\n")
+        else:
+            print("ERROR:La lista de promedios no coincide con la cantidad de estudiantes en el sistema. Abortando...")
+            continue
+        #Imprimir lista ordenada
+        for x in indprom:
+            pn = x[0]
+            if pn == 0:
+                pn = "ND"
+            print(f"El estudiante {estudiantes[x[1]]} con un promedio de {pn}")
+
+        #DEBUGEAR ProMEDIOS
+        print("CONTADOR DE ITERACIONES: ",c)
 
     #DEBUGER
     elif opt == "7":
@@ -94,3 +127,5 @@ while menu:
         load_notes(True)
         load_notes(True)
         load_notes(True)
+
+    print("\n")

@@ -323,3 +323,17 @@ def mayor(lista):
             c+=1
 
     return nmayor, c
+
+#Bubble sort con pasadas completas, sin optimizar.
+def bubble_sort(lista):
+    c = 0 #Contador de iteraciones.
+    n = len(lista)
+
+    for p in range(n - 1):
+        for i in range(n - p - 1):
+            c+=1
+            if lista[i] > lista[i + 1]:
+                # Intercambio directo estilo Python
+                lista[i], lista[i + 1] = lista[i + 1], lista[i]
+
+    return lista, c

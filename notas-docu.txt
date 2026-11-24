@@ -4,7 +4,10 @@ Para empezar con lo mas basico, construir la estructura a partir del archivo. Lo
 
 Planificando las fuciones 4 y 5 se noto que si se ordena a los estudiantes por sus promedios se perderia la corresponsabilidad con la estructura de datos, y si se ordena sobre la estructura de datos original se perderia eficiencia por tener que ordenar 3 listas siempre. Para eso, se decidio que se crearia una lista de pares temporal, compuesta de sublistas con 2 elementos: [Valor, Indice de posicion en EED], de esta forma cuando se ordene por promedios o cantidad de cursos el indice permita obtener de vuelta los datos del estudiante y las 3 variables originales nunca se mueven (a menos que se eliminen entradas). Si hay un empate de promedios, se priorizara el orden por indice.
 
+Se decidio que en lugar de utilizar sublistas, la lista de pares estara compuesta de tuplas ya que la matriz es temporal de la funcion 4 y la estructura (p,i) no se modificara ni se le agregaran o quitaran datos.
+
 La funcion load_notes() retornara 3 listas en caso de ser exitosa, y un False en caso de presentar error, por tanto en main.py se debe de almacenar en una  variable para comprobar que no sea False. En caso de que ocurran errores durante la ejecucion de la funcion y para evitar tener que comprobar en todos los casos que se cierre el archivo aun si hay un return, se utilizara un gestor de contexto with para gestionar el cerrado. 
+
 La funcion ignorara completamente las lineas vacias, tolerara una sola coma sobrante pero no espacios vacios. La funcion debera comprobar: Que no haya cursos repetidos, que no haya documentos repetidos, que la cantidad  de filas con notas corresponda a la cantidad de documentos de identidad, y que la cantidad de notas en todas las filas corresponda a la cantidad de cursos. Asimismo debe de limpiar y comprobar que las filas de cursos y de documentos cumplan el formato especificado. Respecto a la lista de notas asociada a cada estudiante, se convertiran en numero directamete al cargar para validar que el valor sea valido (-1,-2 o del rango 0 - 5 perteneciente a los reales), evitando tener que convertiro de nuevo cada que se vayan a comprobar los archivos o realizar operaciones, el resto de variables se cargaran como strings. La funcion rechaza el archivo completo si una comprobacion falla; se considero inicialmente que la funcion asumiera los datos faltantes en un intento de corregir el archivo (ej: estudiantes repetidos pero cantidad de filas coincide, o espacios en blancos leidos como cancelacion de curso), sin embargo consideramos que la ambiguedad de estas correciones comprometerian la integridad de los datos, por lo que elegimos mejor un rechazo completo si no se cumple la estructura. la funcion recibira un parametro booleano que indicara si se imprime o no un mensaje “EXITO: Archivo notas_estudiantes.csv importado exitosamente!"
 
 Al momento de escribir load_notes, se noto que por la cantidad de comprobaciones necesarias para cargar un archivo, en los casos de error se repite mucho la misma estructura, por eso se creo una funcion auxiliar reutilizable para reportar errores al cargar archivos llamada load_error(), que recibira el nombre del archivo, el error especifico y opcionalmente la linea donde esta corrupto, e indicara en consola al usuario que ese archivo esta corrupto, devolviendo False para el retorno de load_notes().
@@ -12,7 +15,9 @@ Al momento de escribir load_notes, se noto que por la cantidad de comprobaciones
 A la hora de desempaquetar la funcion, primero se almacenara el retorno en una variable para comprobar que no sea False (si se desempaqueta directamente dara TypeError), en caso de que se retorne correctamente se desempaquetaran las variables en orden cursos, estudiantes, notas.
 
 Durante la planeacion de la funcion de eliminacion, se consideraron principalmente dos opciones: Crear una lista nueva desde 0 sin el elemento a eliminar, o modificar la lista original con cortes. Se considero que crear una nueva lista seria implicaria que cada llamada a la funcion los apuntadores de la EED tendrian que reasignarse, mientras que con cortes para modificar sobre la lista evita reasignar en main.
+
 La funcion retornara True en caso de tener exito y False si el elemento es inaccesible (Este caso es muy poco probable que ocurra pues el programa primero valida que la entrada del usuario si exista antes de llamar al metodo, sin embargo se agrego en el caso de que por alguna razon haya un cambio durante la ejecucion). La funcion no aceptara valores negativos, en su lugar se hara otra funcion de busqueda para comprobar el indice de algun elemento.
+
 Para la funcion de eliminacion se opto por no permitir que el usuario continue eliminando estudiantes si la cantidad de estudiantes es 1, para no dejar vacio el archivo porque el cargador lo rechazaria. Se decidio que la funcion seria persistente en lugar de solo eliminar variables en memoria para que se mantenga al recargar el archivo. Para ello se creo una funcion save_notes que se encarga de actualizar el documento despues de eliminar algun estudiante. Al iniciarse, se guarda primero el documento sin modificar en una variable y en caso de que haya algun error de ejecucion, se restaurara el archivo y se indicara al usuario que no se pudo realizar el guardado.
 
 Para la funcion de busqueda, se considero el algoritmo de busqueda lineal y busqueda binaria. El problema con la busqueda binaria a pesar de ser mas eficiente es que necesita que los datos esten ordenados, cosa que para documentos de identidad seria mas ineficiente pues no vienen ordenados, por lo que se opto por la lineal: por defecto, el algoritmo recorrera la lista en orden deteniendose si encuentra una coincidencia; Un parametro "r" (que por defecto esta desactivado) indicara si en la lista pueden haber elementos repetidos, en cuyo caso recorrera la lista completa sin parar e ira agregando las coincidencias a una lista que se retornara. Por diseño, no pueden haber documentos repetidos, por lo que la primera coincidencia retornara el indice del estudiante a eliminar, pero como se reutilizo para la funcion de mayor nota, se le agrego este "modo"; Si no se encuentran coincidencias, retornara -1.
@@ -25,4 +30,24 @@ Para imprimir la estructura de datos se reutilizo la funcion imprimir_tabla de l
 
 Para el menu basico de usuario se utilizaron bucles While para poder entrar y salir entre opciones sin terminar el programa completamente.
 
-para la funcion 4, se usara bubble sort clasica (todas las pasadas completas, sin corte anticipado). Esta funcion sera candidata para optimizacion.
+para la funcion 4, primero se utilizo Bubble Sort clasica con todas las pasadas completas:
+
+#Bubble sort con pasadas completas, sin optimizar.
+def bubble_sort(lista):
+    c = 0 #Contador de iteraciones.
+    n = len(lista)
+
+    for p in range(n - 1):
+        for i in range(n - p - 1):
+            c+=1
+            if lista[i] > lista[i + 1]:
+                # Intercambio directo estilo Python
+                lista[i], lista[i + 1] = lista[i + 1], lista[i]
+
+    return lista, c
+
+Al medir su eficiencia, los resultados fueron:
+10 Estudiantes: 45 iteraciones
+100 Estudiantes: 4950 iteraciones
+1000 Estudiantes: 499500 iteraciones
+razon 1 : 110 : 11100, crecimiento cuadrado. 
