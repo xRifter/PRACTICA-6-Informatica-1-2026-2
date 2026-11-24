@@ -92,13 +92,18 @@ while menu:
         for estudiante in estudiantes:
             c = 0
             p = 0
+            inv = 0
             for nota in notas[id]:
                 if nota>=0:
                     p+=nota
                     c+=1
+                elif nota == -1 or nota == -2:
+                    inv += 1
             if p > 0:
                 p = round(p/c,2)
-            indprom.append( (p, id) ) 
+            if inv == len(notas[id]):
+                p = -1
+            indprom.append( (p*-1, id) ) #-1 para que se ordenen de mayor a menor, el algoritmo burbuja ordena ascendentemente.
             id+=1
 
         #Ordenamiento con burbuja
@@ -110,8 +115,8 @@ while menu:
             continue
         #Imprimir lista ordenada
         for x in indprom:
-            pn = x[0]
-            if pn == 0:
+            pn = x[0]*-1
+            if pn == -1:
                 pn = "ND"
             print(f"El estudiante {estudiantes[x[1]]} con un promedio de {pn}")
 

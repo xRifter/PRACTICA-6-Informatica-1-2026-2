@@ -38,7 +38,7 @@ def bubble_sort(lista):
     n = len(lista)
 
     for p in range(n - 1):
-        for i in range(n - p - 1):
+        for i in range(n - 1):
             c+=1
             if lista[i] > lista[i + 1]:
                 # Intercambio directo estilo Python
@@ -47,7 +47,8 @@ def bubble_sort(lista):
     return lista, c
 
 Al medir su eficiencia, los resultados fueron:
-10 Estudiantes: 45 iteraciones
-100 Estudiantes: 4950 iteraciones
-1000 Estudiantes: 499500 iteraciones
-razon 1 : 110 : 11100, crecimiento cuadrado. 
+
+10 Estudiantes: 81 iteraciones
+100 Estudiantes: 9801 iteraciones
+1000 Estudiantes: 998001 iteraciones
+razon 1 : 121 : 12321, Crecimiento aproximadamente al cuadrado. 

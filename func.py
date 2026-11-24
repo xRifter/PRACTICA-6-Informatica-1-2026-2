@@ -76,7 +76,7 @@ def load_notes(p=False,filename = './notas_estudiantes.csv'):
                 return load_error(filename,"El archivo no tiene notas o encabezado") 
             #Si no corresponden la cantidad de filas de notas con la cantidad de estudiantes.
             if len(estudiantes) != (lact-2):
-                return load_error(filename,f"La cantidad de estudiantes es {len(estudiantes)} y hay {lact-2} filas de notas")
+                return load_error(filename,f"La cantidad de estudiantes es {len(estudiantes)} y hay {lact-2} filas de notas",2)
                     
 
     except FileNotFoundError:
@@ -330,7 +330,7 @@ def bubble_sort(lista):
     n = len(lista)
 
     for p in range(n - 1):
-        for i in range(n - p - 1):
+        for i in range(n - 1):
             c+=1
             if lista[i] > lista[i + 1]:
                 # Intercambio directo estilo Python
