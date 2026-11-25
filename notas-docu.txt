@@ -410,3 +410,61 @@ def loadHistt(p=False, filename = './hist_matriculados.csv'):
 Cantidad de consultas con 100 datos: 100 con 1000 datos: 1000
 
 La optimizacion tiene una limitacion: La tabla siempre va a ocupar 10,000 casillas sin importar la cantida de datos, por lo que se esta sacrificando memoria y el cambio solamente valdra la pena despues de aproximadamente 140 filas en el archivo.
+
+______________________________________________________________________________________________
+
+
+Para optimizar el algoritmo bubble_sort (En moodle no se encontro un ejemplo, asi que se utilizo la version mas clasica y con todas las vueltas.), se resto al segundo ciclo for los valores ya ordenados en anteriores pasadas, y se agrego una bandera que comprueba si hubo necesidad de hacer intercambios, saltandose las secciones a la derecha de la lista que ya estan ordenadas o si la lista ya esta ordenada, realizando una sola pasada.
+
+#Bubble sort con pasadas completas, sin optimizar.
+def bubble_sort(lista):
+    c = 0 #Contador de iteraciones.
+    n = len(lista)
+
+    for p in range(n - 1):
+        for i in range(n - 1):
+            c+=1
+            if lista[i] > lista[i + 1]:
+                # Intercambio directo estilo Python
+                lista[i], lista[i + 1] = lista[i + 1], lista[i]
+
+    return lista, c
+
+Al medir su eficiencia, los resultados fueron:
+
+10 Estudiantes: 81 iteraciones
+100 Estudiantes: 9801 iteraciones
+1000 Estudiantes: 998001 iteraciones
+razon 1 : 121 : 12321, Crecimiento aproximadamente al cuadrado. 
+
+#Bubble sort optimizado.
+def bubble_sort(lista):
+    c = 0 #Contador de iteraciones.
+    n = len(lista)
+
+    for p in range(n - 1):
+        ord = True
+        for i in range(n - p - 1):
+            c+=1
+            if lista[i] > lista[i + 1]:
+                # Intercambio directo estilo Python
+                lista[i], lista[i + 1] = lista[i + 1], lista[i]
+                ord = False
+        if ord:
+            break
+
+    return lista, c
+
+Al medir su eficiencia, los resultados fueron:
+
+10 Estudiantes: 45 iteraciones
+100 Estudiantes: 4760 iteraciones
+1000 Estudiantes: 499329 iteraciones
+(Con datos aleatorios)
+razon 1 : 105.77 : 11096.2, Crecimiento aproximadamente cuadrado. 
+
+Con 10 estudiantes el algoritmo ahora es (81/45) 1.8 veces mas rapido
+con 100 (9801/4760), es 2.06 veces mas rapido
+con 1000 (998001/499329) es 2 veces mas rapido
+
+La version optimizada es mucho mas eficiente sobre todo si los datos ya estan ordenados o parcialmente ordenados (Con N estudiantes, N-1 iteraciones si estan ordenados, N*(N/2) iteraciones si estan en orden inverso), y con datos aleatorios se ahorra aproximadamente un 50% de trabajo.
