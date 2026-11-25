@@ -418,7 +418,7 @@ def promediar(lista,r=None):
     promedio = 0
     if len(lista)>0:
         for elemento in lista:
-            if type(elemento) == type("a"):
+            if type(elemento) == type(123):
                 promedio+=elemento
                 total+=1
             else:
@@ -436,71 +436,86 @@ def tanteoBaj(años, csEst):
     c = 0
     #Contador de iteraciones
     k = 0
+    #Veces que el centro se mueve (a1, a2, a4, a5)
     k1 = 0
+    #Veces que el centro se queda quieto y hace Zoom
     k2 = 0
     #Centrar años
-    años = [año - (promediar(años)) for año in años]
+    pa = promediar(años)
+    años = [año - pa for año in años]
 
     a = (csEst[-1] - csEst[0])/(años[-1] - años[0])
-    p = promediar(csEst)
-    my = mae(regresion(a, p, años), csEst)
+    p0 = promediar(csEst)
+    pAct = p0
+    my = mae(regresion(a, pAct, años), csEst)
+    c+=1
 
     #Inicializar variables para tanteo en bajada por zoom
-    rango,centro = a
-    cambiable = True
-    while cambiable:
-        candidatos = list()
-        a1 = centro-rango
-        a2 = centro-(rango/2)
-        a3 = centro
-        a4 = centro+(rango/2)
-        a5 = centro+rango
+    rangoA,centroA = abs(a),a
+    minB = minimo(csEst)
+    maxB = mayor(csEst,False)
+    
+    rangoB = (maxB - minB) / 2
+    centroB = (minB + maxB) / 2
+    while rangoA>=0.001 or rangoB>=0.001:
+        k+=1
+        if rangoA >= 0.001:
+            candidatos = list()
+            a1 = centroA-rangoA
+            a2 = centroA-(rangoA/2)
+            a3 = centroA
+            a4 = centroA+(rangoA/2)
+            a5 = centroA+rangoA
 
-        y1 = regresion(a1,p,años)
-        y2 = regresion(a2,p,años)
-        y3 = regresion(a3,p,años)
-        y4 = regresion(a4,p,años)
-        y5 = regresion(a5,p,años)
+            y1 = regresion(a1,pAct,años)
+            y2 = regresion(a2,pAct,años)
+            y3 = regresion(a3,pAct,años)
+            y4 = regresion(a4,pAct,años)
+            y5 = regresion(a5,pAct,años)
 
-        candidatos = [(mae(y1, csEst), a1),(mae(y2, csEst), a2),(mae(y3, csEst), a3),(mae(y4, csEst), a4),(mae(y5, csEst), a5)]
-        c+=5 #Se usa mas MAE
-        my, centro= minimo(candidatos)
-        if not (a == a1 or a == a5):
-            rango = rango/2
-        #Evaluar si finalizar
-        if rango < 0.001:
-            a = centro
-            while True:    
-                candidatos = list()
-                minB = csEst[0]
-                for cc in csEst:
-                    if cc < minB:
-                        minB = cc
-                rango = (mayor(csEst) - minB) / 2
-                centro = (minB + mayor(csEst)) / 2
-                p1 = centro-rango
-                p2 = centro-(rango/2)
-                p3 = centro
-                p4 = centro+(rango/2)
-                p5 = centro+rango
+            candidatos = [(mae(y1, csEst), a1),(mae(y2, csEst), a2),(mae(y3, csEst), a3),(mae(y4, csEst), a4),(mae(y5, csEst), a5)]
+            c+=5 #Se usa mas MAE
+            ganador = minimo(candidatos)
+            if ganador[1] == centroA:
+                k2+=1
+            else:
+                k1+=1
+            print(my)#DEbug
+            my, centroA= ganador
+            print(my)
+            if not (centroA == a1 or centroA == a5):
+                rangoA = rangoA/2
+            if a != centroA:
+                a = centroA 
 
-                y1 = regresion(a,p1,años)
-                y2 = regresion(a,p2,años)
-                y3 = regresion(a,p3,años)
-                y4 = regresion(a,p4,años)
-                y5 = regresion(a,p5,años)
+        if rangoB >= 0.001:
+            candidatos = list()
+            p1 = centroB-rangoB
+            p2 = centroB-(rangoB/2)
+            p3 = centroB
+            p4 = centroB+(rangoB/2)
+            p5 = centroB+rangoB
 
-                candidatos = [(mae(y1, csEst), p1),(mae(y2, csEst), p2),(mae(y3, csEst), p3),(mae(y4, csEst), p4),(mae(y5, csEst), p5)]
-                c+=5 #Se usa mas MAE
-                my, centro= minimo(candidatos)
-                if not (a == a1 or a == a5):
-                    rango = rango/2
-                #Evaluar si finalizar
-                if rango < 0.001:
-                    #Convertir p (b normalizada con la media) en b con los años REALES
-                    b = centro - a*promediar(años)
-                    break
-            break
+            y1 = regresion(a,p1,años)
+            y2 = regresion(a,p2,años)
+            y3 = regresion(a,p3,años)
+            y4 = regresion(a,p4,años)
+            y5 = regresion(a,p5,años)
+
+            candidatos = [(mae(y1, csEst), p1),(mae(y2, csEst), p2),(mae(y3, csEst), p3),(mae(y4, csEst), p4),(mae(y5, csEst), p5)]
+            c+=5 #Se usa mas MAE
+            ganador = minimo(candidatos)
+            if ganador[1] == centroB:
+                k2+=1
+            else:
+                k1+=1
+            my, centroB= ganador
+            if not (centroB == p1 or centroB == p5):
+                rangoB = rangoB/2
+            if pAct != centroB:
+                pAct = centroB 
+    #Convertir p (b normalizada con la media) en b con los años REALES
+    b = centroB - a*pa
  
     return a,b,my,c,k,k1,k2
 

@@ -135,3 +135,153 @@ Mejoria del MAE con tanteo inoptimo y sin normalizar (hist_matriculados_1000):
 3.985896450736128
 
 Con 1000 entradas while se repite unas 61 veces, se llama 489 veces a mae, 41 evaluaciones de menor error y 20 cambios de paso. valores a,b = 1.82, -3598.01.
+
+Para optimizar la funcion, se decidio primero procesar la lista de los años antes del bucle para reducir y centrar los posibles a,b (Pues la mayoria de numeros son cercanos al 2000 para arriba, lo que hace que cualquier cambio minimo en a mueva la recta). Anteriormente se considero utilizar normalizacion restandole a todos los años el primero de la lista para la funcion inoptimizada pero se descarto para evitar la pasada extra de una funcionalidad que seria replanteada: siguiendo una logica similar se normalizaran los años utilizando la media resultante de una pasada por la lista (año = año-media). De esta forma, a solo girara la recta alrededor del centro.
+
+En cuanto al tanteo, se opto por utilizar un zoom para acortar el rango de busqueda: La funcion tomara el valor inicial como centro y hara un radio de 5 puntos alrededor de este centro (restando centro-radio), luego evaluara el MAE de los 5 puntos. Se considero hacer un criterio de parada dinamico que cambiara con la cantidad de estudiantes, pero la optimizacion fue muy poca por lo que se opto por definir que el zoom se detendria cuando el rango de busqueda fuera de menos de 0.001. Para inicializar las variables a,b para el zoom, se utilizo la misma pendiente de Delta(csEst)/Delta(años), y como años esta normalizada en la media, b se inicializara en el valor de x=0 en la media de años. La version de b normalizada se llama p en el codigo, pero al momento de retornar, la funcion de tanteo volvera a convertir a p al b normal con los valores reales de el archivo.  
+
+Ver Optimizada:
+#Tanteo a la baja con reduccion de rangos
+def tanteoBaj(años, csEst):
+    #Contador de llamadas a MAE
+    c = 0
+    #Contador de iteraciones
+    k = 0
+    #Veces que el centro se mueve (a1, a2, a4, a5)
+    k1 = 0
+    #Veces que el centro se queda quieto y hace Zoom
+    k2 = 0
+    #Centrar años
+    pa = promediar(años)
+    años = [año - pa for año in años]
+
+    a = (csEst[-1] - csEst[0])/(años[-1] - años[0])
+    p0 = promediar(csEst)
+    pAct = p0
+    my = mae(regresion(a, pAct, años), csEst)
+    c+=1
+
+    #Inicializar variables para tanteo en bajada por zoom
+    rangoA,centroA = abs(a),a
+    minB = minimo(csEst)
+    maxB = mayor(csEst,False)
+    
+    rangoB = (maxB - minB) / 2
+    centroB = (minB + maxB) / 2
+    while rangoA>=0.001 or rangoB>=0.001:
+        k+=1
+        if rangoA >= 0.001:
+            candidatos = list()
+            a1 = centroA-rangoA
+            a2 = centroA-(rangoA/2)
+            a3 = centroA
+            a4 = centroA+(rangoA/2)
+            a5 = centroA+rangoA
+
+            y1 = regresion(a1,pAct,años)
+            y2 = regresion(a2,pAct,años)
+            y3 = regresion(a3,pAct,años)
+            y4 = regresion(a4,pAct,años)
+            y5 = regresion(a5,pAct,años)
+
+            candidatos = [(mae(y1, csEst), a1),(mae(y2, csEst), a2),(mae(y3, csEst), a3),(mae(y4, csEst), a4),(mae(y5, csEst), a5)]
+            c+=5 #Se usa mas MAE
+            ganador = minimo(candidatos)
+            if ganador[1] == centroA:
+                k2+=1
+            else:
+                k1+=1
+            print(my)#DEbug
+            my, centroA= ganador
+            print(my)
+            if not (centroA == a1 or centroA == a5):
+                rangoA = rangoA/2
+            if a != centroA:
+                a = centroA 
+
+        if rangoB >= 0.001:
+            candidatos = list()
+            p1 = centroB-rangoB
+            p2 = centroB-(rangoB/2)
+            p3 = centroB
+            p4 = centroB+(rangoB/2)
+            p5 = centroB+rangoB
+
+            y1 = regresion(a,p1,años)
+            y2 = regresion(a,p2,años)
+            y3 = regresion(a,p3,años)
+            y4 = regresion(a,p4,años)
+            y5 = regresion(a,p5,años)
+
+            candidatos = [(mae(y1, csEst), p1),(mae(y2, csEst), p2),(mae(y3, csEst), p3),(mae(y4, csEst), p4),(mae(y5, csEst), p5)]
+            c+=5 #Se usa mas MAE
+            ganador = minimo(candidatos)
+            if ganador[1] == centroB:
+                k2+=1
+            else:
+                k1+=1
+            my, centroB= ganador
+            if not (centroB == p1 or centroB == p5):
+                rangoB = rangoB/2
+            if pAct != centroB:
+                pAct = centroB 
+    #Convertir p (b normalizada con la media) en b con los años REALES
+    b = centroB - a*pa
+ 
+    return a,b,my,c,k,k1,k2
+
+Mejoria del MAE con tanteo optimizado (hist_matriculados_100): 
+
+4.322403100775194
+4.322403100775194
+4.75093023255814
+4.75093023255814
+4.75093023255814
+4.75093023255814
+4.75093023255814
+4.75093023255814
+4.75093023255814
+4.65279069767442
+4.26970445736434
+4.254738372093024
+4.120058139534883
+4.109842538759691
+4.109842538759691
+4.109842538759691
+4.108944404069768
+4.1021342054263545
+4.1021342054263545
+4.10140140503876
+4.10140140503876
+4.101350381540698
+4.10103500484496
+4.10103500484496
+
+Para 100 entradas se llama a mae aproximadamente 146 veces, while se repite 17 veces y deja de valores a y b: 1.84 y -3640, con un mae de 4.1. 15 evaluaciones de menor error y 14 cambios de paso.
+
+Mejoria del MAE con tanteo optimizado (hist_matriculados_1000): 
+
+4.0756354430379735
+4.0756354430379735
+9.20868860759494
+9.20868860759494
+9.20868860759494
+9.20868860759494
+9.20868860759494
+9.20868860759494
+9.20868860759494
+9.20868860759494
+9.20868860759494
+9.20868860759494
+8.130988291139253
+8.130988291139253
+4.025121677215191
+4.025121677215191
+4.025121677215191
+4.025121677215191
+4.025121677215191
+4.004953945806963
+4.004953945806963
+4.004953945806963
+
+Con 1000 entradas while se repite unas 21 veces, se llama 161 veces a mae, 21 evaluaciones de menor error y 27 cambios de paso. valores a,b = 1.82, -3597.42
