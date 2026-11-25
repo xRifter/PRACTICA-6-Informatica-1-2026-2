@@ -285,3 +285,132 @@ Mejoria del MAE con tanteo optimizado (hist_matriculados_1000):
 4.004953945806963
 
 Con 1000 entradas while se repite unas 21 veces, se llama 161 veces a mae, 21 evaluaciones de menor error y 27 cambios de paso. valores a,b = 1.82, -3597.42
+
+Para la segunda optimizacion, se decidio optimizar load_hist aprovechando que existe un rango de años validos entre 0-9999, porque la version original utiliza not in al momento de agregar años a la lista. 
+Version original:
+def loadHist(p=False, filename = './hist_matriculados.csv'):
+    #Contador de iteraciones:
+    c = 0
+    try:
+        años = list()
+        csEst = list()
+        #abrir con with para cierre automatico
+        with open(filename, mode='r', encoding='utf-8') as filehist:
+            lact = 0 #Linea valida actual 
+            lread = 0 #Linea actual del archivo
+            for linea in filehist:
+
+                #Contarla siempre
+                lread += 1
+                
+                # Separar texto
+                columnas = linea.strip().split(',') 
+
+                #Saltar lineas vacias, incompetas y el encabezado.
+                if not columnas[0] or len(columnas) < 2 or len(columnas) > 2 or columnas[0] == "Año":
+                    continue
+
+                #Limpiar cola
+                if not columnas[-1]:
+                    delElem(columnas,len(columnas)-1)
+
+                lact += 1
+
+                #Obtener datos
+                try:
+                    año = int(columnas[0])
+                    cEst = int(columnas[1])
+                except ValueError:
+                    return loadError(filename,"Hay uno o varios valores invalidos que no son numericos", lread)
+                if año > 9999 or año < 0:
+                    return loadError(filename,"Hay un año invalido", lread)
+                #Por cada ejecucion se hacen len(años) iteraciones:
+                c+=len(años)
+                if año not in años:
+                    años.append(año)
+                else:
+                    return loadError(filename,"Hay uno varios años repetidos", lread)
+                csEst.append(cEst)
+            #Si el archivo solo tiene encabezado
+            if lact < 2:
+                return loadError(filename,"El archivo no tiene notas o encabezado")   
+
+    except FileNotFoundError:
+        return loadError(filename)
+    except Exception as er:
+        return loadError(filename,f"Ocurrio un error desconocido al importar {filename}: {er}")
+    else:
+        if p:
+            print(f"EXITO: Archivo {filename} importado exitosamente!")
+        return años, csEst, c
+    
+Cantidad de consultas con 100 datos: 4950 con 1000 datos: 499500
+
+Para la optimizacion, como el rango estara entre 0 y 9999, se creara al inicio de la funcion una lista de casillas de boolenos, donde cada año valido correspondera a su posicion en esta lista y el valor indicara si ya esta en la lista, de forma que si es False el programa se ejecute con normalidad y si una posicion ya esta en True indique que hay datos repetidos en el archivo y rechace la carga.
+
+Version optimizada:
+#loadHist Optimizado
+def loadHistt(p=False, filename = './hist_matriculados.csv'):
+    #Contador de consultas a Años:
+    c = 0
+    #Crear tabla de casillas:
+    cas = list()
+    for _ in range(10000): #Cada año correspondera a su posicion y el valor sera para ver si ya esta.
+        cas.append(False)
+    try:
+        años = list()
+        csEst = list()
+        #abrir con with para cierre automatico
+        with open(filename, mode='r', encoding='utf-8') as filehist:
+            lact = 0 #Linea valida actual 
+            lread = 0 #Linea actual del archivo
+            for linea in filehist:
+
+                #Contarla siempre
+                lread += 1
+                
+                # Separar texto
+                columnas = linea.strip().split(',') 
+
+                #Saltar lineas vacias, incompetas y el encabezado.
+                if not columnas[0] or len(columnas) < 2 or len(columnas) > 2 or columnas[0] == "Año":
+                    continue
+
+                #Limpiar cola
+                if not columnas[-1]:
+                    delElem(columnas,len(columnas)-1)
+
+                lact += 1
+
+                #Obtener datos
+                try:
+                    año = int(columnas[0])
+                    cEst = int(columnas[1])
+                except ValueError:
+                    return loadError(filename,"Hay uno o varios valores invalidos que no son numericos", lread)
+                if año > 9999 or año < 0:
+                    return loadError(filename,"Hay un año invalido", lread)
+                #Comparar con la tabla de casillas por años
+                c+=1 #1 consulta a cas.
+                if not cas[año]:
+                    años.append(año)
+                    cas[año] = True
+                else:
+                    return loadError(filename,"Hay uno varios años repetidos", lread)
+                csEst.append(cEst)
+            #Si el archivo solo tiene encabezado
+            if lact < 2:
+                return loadError(filename,"El archivo no tiene notas o encabezado")   
+
+    except FileNotFoundError:
+        return loadError(filename)
+    except Exception as er:
+        return loadError(filename,f"Ocurrio un error desconocido al importar {filename}: {er}")
+    else:
+        if p:
+            print(f"EXITO: Archivo {filename} importado exitosamente!")
+        return años, csEst, c
+
+Cantidad de consultas con 100 datos: 100 con 1000 datos: 1000
+
+La optimizacion tiene una limitacion: La tabla siempre va a ocupar 10,000 casillas sin importar la cantida de datos, por lo que se esta sacrificando memoria y el cambio solamente valdra la pena despues de aproximadamente 140 filas en el archivo.

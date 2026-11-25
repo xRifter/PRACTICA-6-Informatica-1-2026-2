@@ -178,7 +178,8 @@ while menu:
         if a is None or dataHist is None:
             hist = loadHist(True)
             if hist:
-                años, cantEstu = hist
+                años, cantEstu, cH = hist
+                print("iteraciones de cH", cH)
             else:
                 continue
             a,b,MAE,c,k,k1,k2 = tanteoBaj(años,cantEstu)
@@ -186,7 +187,7 @@ while menu:
             dataHist = list()
             for x in range(len(años)):
                 dataHist.append([años[x],cantEstu[x]])
-        print(a,b,MAE,"llamadas a mae",c,"vueltas de while",k,"evaluaciones de menor error:",k1,"cambios de paso:",k2) #Debug
+        #DEBUG: print(a,b,MAE,"llamadas a mae",c,"vueltas de while",k,"evaluaciones de menor error:",k1,"cambios de paso:",k2) #Debug
 
         #Pedir datos al usuario:
         while True:

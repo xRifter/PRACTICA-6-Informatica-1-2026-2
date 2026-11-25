@@ -88,7 +88,14 @@ def loadNotes(p=False,filename = './notas_estudiantes.csv'):
             print("EXITO: Archivo notas_estudiantes.csv importado exitosamente!")
         return cursos, estudiantes, notas
 
+#loadHist Optimizado
 def loadHist(p=False, filename = './hist_matriculados.csv'):
+    #Contador de consultas a Años:
+    c = 0
+    #Crear tabla de casillas:
+    cas = list()
+    for _ in range(10000): #Cada año correspondera a su posicion y el valor sera para ver si ya esta.
+        cas.append(False)
     try:
         años = list()
         csEst = list()
@@ -120,8 +127,68 @@ def loadHist(p=False, filename = './hist_matriculados.csv'):
                     cEst = int(columnas[1])
                 except ValueError:
                     return loadError(filename,"Hay uno o varios valores invalidos que no son numericos", lread)
-                if año > 9999:
+                if año > 9999 or año < 0:
                     return loadError(filename,"Hay un año invalido", lread)
+                #Comparar con la tabla de casillas por años
+                c+=1 #1 consulta a cas.
+                if not cas[año]:
+                    años.append(año)
+                    cas[año] = True
+                else:
+                    return loadError(filename,"Hay uno varios años repetidos", lread)
+                csEst.append(cEst)
+            #Si el archivo solo tiene encabezado
+            if lact < 2:
+                return loadError(filename,"El archivo no tiene notas o encabezado")   
+
+    except FileNotFoundError:
+        return loadError(filename)
+    except Exception as er:
+        return loadError(filename,f"Ocurrio un error desconocido al importar {filename}: {er}")
+    else:
+        if p:
+            print(f"EXITO: Archivo {filename} importado exitosamente!")
+        return años, csEst, c
+
+#LoadHist ineficiente
+def loadHistOG(p=False, filename = './hist_matriculados.csv'):
+    #Contador de consultas a años:
+    c = 0
+    try:
+        años = list()
+        csEst = list()
+        #abrir con with para cierre automatico
+        with open(filename, mode='r', encoding='utf-8') as filehist:
+            lact = 0 #Linea valida actual 
+            lread = 0 #Linea actual del archivo
+            for linea in filehist:
+
+                #Contarla siempre
+                lread += 1
+                
+                # Separar texto
+                columnas = linea.strip().split(',') 
+
+                #Saltar lineas vacias, incompetas y el encabezado.
+                if not columnas[0] or len(columnas) < 2 or len(columnas) > 2 or columnas[0] == "Año":
+                    continue
+
+                #Limpiar cola
+                if not columnas[-1]:
+                    delElem(columnas,len(columnas)-1)
+
+                lact += 1
+
+                #Obtener datos
+                try:
+                    año = int(columnas[0])
+                    cEst = int(columnas[1])
+                except ValueError:
+                    return loadError(filename,"Hay uno o varios valores invalidos que no son numericos", lread)
+                if año > 9999 or año < 0:
+                    return loadError(filename,"Hay un año invalido", lread)
+                #Por cada ejecucion se hacen len(años) consultas:
+                c+=len(años)
                 if año not in años:
                     años.append(año)
                 else:
@@ -138,7 +205,7 @@ def loadHist(p=False, filename = './hist_matriculados.csv'):
     else:
         if p:
             print(f"EXITO: Archivo {filename} importado exitosamente!")
-        return años, csEst
+        return años, csEst, c
 
 def loadError(filen,texto="\n", linea = None):
     if linea != None:
@@ -480,9 +547,7 @@ def tanteoBaj(años, csEst):
                 k2+=1
             else:
                 k1+=1
-            print(my)#DEbug
             my, centroA= ganador
-            print(my)
             if not (centroA == a1 or centroA == a5):
                 rangoA = rangoA/2
             if a != centroA:
