@@ -1,4 +1,4 @@
-Documento borrador de notas del desarollo. El informe completo se redactara en base a esto:
+Notas del desarollo. El informe completo se redactara en base a esto:
 
 Para empezar con lo mas basico, construir la estructura a partir del archivo. Lo primero que pensamos fue 3 variables tipo lista que seran la informacion base.
 
@@ -30,25 +30,108 @@ Para imprimir la estructura de datos se reutilizo la funcion imprimir_tabla de l
 
 Para el menu basico de usuario se utilizaron bucles While para poder entrar y salir entre opciones sin terminar el programa completamente.
 
-para la funcion 4, primero se utilizo Bubble Sort clasica con todas las pasadas completas:
+Para la funcionalidad de ordenar a los estudiantes por promedios, se decidio totalizar la cantidad de cursos sin materia (Cancelados o No matriculados) de el estudiante para poder diferenciarlos de estudiantes con promedio de 0 e indicarlo en pantalla.
 
-#Bubble sort con pasadas completas, sin optimizar.
-def bubble_sort(lista):
-    c = 0 #Contador de iteraciones.
-    n = len(lista)
+Para la funcionalidad de ordenar a los estudiantes dependiendo de la cantidad de materias cursadas, se decidio totalizar la cantidad de cursos en una variable k y restarle una unidad por cada materia cancelada o No matriculada de el estudiante para poder diferenciar entre estudiantes que no tienen cursos por no haber matriculado nada de los que no tenian cursos por cancelaciones y/o falta de matricula (Estudiantes sin historial academico).
 
-    for p in range(n - 1):
-        for i in range(n - 1):
-            c+=1
-            if lista[i] > lista[i + 1]:
-                # Intercambio directo estilo Python
-                lista[i], lista[i + 1] = lista[i + 1], lista[i]
+Para ambos casos se utilizo una estructura similar con centinelas -1 para los casos especiales.
 
-    return lista, c
+Se decidio optimizar la funcion loadNotes para evitar utilizar (not in) de forma que utilice una matriz y compare solamente los documentos con los mismos k ultimos digitos. la otra optimizada sera la funcion de tanteo de la parte 2. Primero se hara en tanteo de busqueda cuesta abajo, luego se buscara como optimizar.
 
-Al medir su eficiencia, los resultados fueron:
+PARTE 2
 
-10 Estudiantes: 81 iteraciones
-100 Estudiantes: 9801 iteraciones
-1000 Estudiantes: 998001 iteraciones
-razon 1 : 121 : 12321, Crecimiento aproximadamente al cuadrado. 
+Para la funcionalidad 6, se imito la estructura de load_notes para crear una funcion de cargado para el archivo hist_matriculados.csv, llamada load_hist: la funcion cargara en memoria la estructura del archivo como 2 listas que se construiran simultaneamente para que los ids de ambos tengan corresponsabilidad: años y csEst (cantidad de estudiantes). 
+Se desarollo la funcion de regresion lineal que aplicara la formula y = ax+b para obtener una prediccion de y, siendo una funcionalidad generica para reutilizar en varios puntos de la parte 2. La funcion recibira valores a, b, y una lista de valores X, evaluara la formula para cada X y retornara una lista de Ys por cada X.
+
+Se desarollo la funcion MAE que recibira dos listas de Y: una armada con tanteos y la de valores reales, la funcion recorrera ambas listas hallando la diferencia entre los valores gemelos y promediando estas diferencias para retornar un solo valor de error.
+
+la funcion de tanteo a la baja (Sin optimizar) recibe las dos listas de load_hist y define los valores a,b iniciales como la diferencia entre el valor inicial y final de ambas listas. define valores de paso que sean 1/10 parte de los valores a,b o si es una cantidad muy pequeña, utiliza un paso predefinido (0.1). ejecuta un bucle while que evalua por tanteo paso +/- a y paso +/- b, con los 4 valores diferentes resultantes de esa operacion se evaluan 8 regresiones lineales surgidas de las posibles combinaciones de las variables. compara el resultado de MAE de las 8 regresiones para determinar la que tenga un menor MAE (menor error) y en caso de que no haya una mejoria de menor error ajusta el paso o se detiene. 
+
+Se volvera a utilizar regresion() para los datos que se enviaran a plots.py.
+Se modifico plots.py para que el punto de la prediccion se dibuje distinto.
+
+OPTIMIZACIONES:
+Ver original
+def tanteoBaj(años, csEst):
+    #Contador de llamadas a MAE
+    c = 0
+    #Contador de iteraciones
+    k = 0
+    k1 = 0
+    k2 = 0
+    a = (csEst[-1] - csEst[0])/(años[-1] - años[0])
+    b = csEst[-1] - (a*años[-1]) 
+    my = mae(regresion(a, b, años), csEst)
+    c+=1
+    #paso = 1/10 del valor base
+    pasoa = max(abs(a) * 0.10, 0.1)
+    pasob = max(abs(b) * 0.10, 0.1)
+    cambiable = True
+    while cambiable:
+        #mae debug
+        print(my)
+        k+=1
+        a1 = a+pasoa
+        a2 = a-pasoa
+
+        b1 = b+pasob
+        b2 = b-pasob
+
+        y1 = regresion(a1,b1,años)
+        y2 = regresion(a2,b1,años)
+        y3 = regresion(a1,b2,años)
+        y4 = regresion(a2,b2,años)
+        y5 = regresion(a1,b,años)
+        y6 = regresion(a2,b,años)
+        y7 = regresion(a,b1,años)
+        y8 = regresion(a,b2,años)
+
+        candidatos = [(mae(y1, csEst), a1, b1),(mae(y2, csEst), a2, b1),(mae(y3, csEst), a1, b2),(mae(y4, csEst), a2, b2),(mae(y5, csEst), a1, b),(mae(y6, csEst), a2, b),(mae(y7, csEst), a, b1),(mae(y8, csEst), a, b2)]
+        c+=8
+        minimo = candidatos[0]
+        for cc in candidatos:
+            if cc < minimo:
+                minimo = cc
+        mejor_m, mejor_a, mejor_b = minimo
+
+        #Evaluar si es menor error
+        if mejor_m < my:
+            a, b, my = mejor_a, mejor_b, mejor_m
+            k1 += 1
+        else:#Actualizar el paso o finalizar
+            k2 += 1
+            if pasoa > 0.001 or pasob > 0.001:
+                pasoa, pasob = pasoa/2,pasob/2
+            else:
+                cambiable = False
+    return a,b,my,c,k,k1,k2
+
+Mejoria del MAE con tanteo inoptimo y sin normalizar (hist_matriculados_100): 
+4.4472093023256045
+(...)
+4.322534883720919
+(...)
+4.119720930232557
+(...)
+4.1115374878875715
+(...)
+4.1009999720848285
+(...)
+4.100930082868308
+
+Para 100 entradas se llama a mae un promedio de 1137 veces, while se repite 142 veces y deja de valores a y b: 1.84 y -3641, con un mae de 4.1. 122 evaluaciones de menor error y 20 cambios de paso. Cantidad de estudiantes estimada 252.
+
+Mejoria del MAE con tanteo inoptimo y sin normalizar (hist_matriculados_1000): 
+5.917837974683449
+(...)
+5.488855791139293
+(...)
+4.167455648734136
+(...)
+4.007481776107699
+(...)
+3.9865692939082336
+(...)
+3.985896450736128
+
+Con 1000 entradas while se repite unas 61 veces, se llama 489 veces a mae, 41 evaluaciones de menor error y 20 cambios de paso. valores a,b = 1.82, -3598.01.
