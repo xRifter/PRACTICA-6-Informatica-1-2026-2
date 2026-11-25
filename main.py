@@ -1,3 +1,31 @@
+'''
+Programa principal de la practica 6: menu de usuario para gestionar las
+notas de los estudiantes y predecir la matricula futura.
+
+Usa un bucle while para poder entrar y salir de las opciones sin terminar
+el programa. Opciones:
+    (1) Cargar notas: carga notas_estudiantes.csv e imprime la tabla
+    (2) Eliminar un estudiante: lo borra de memoria y del archivo
+    (3) Mayor nota de un estudiante: nota y curso(s) donde la obtuvo
+    (4) Ordenar estudiantes por promedio (burbuja, de mayor a menor)
+    (5) Ordenar estudiantes por cantidad de cursos inscritos (seleccion)
+    (6) Prediccion de estudiantes: regresion lineal con tanteo a la baja
+        sobre hist_matriculados.csv, genera la grafica de la prediccion
+    (7) Opcion de depuracion del cargador (carga el archivo varias veces)
+    (-1) Salir
+
+Variables principales:
+    notes: Retorno de loadNotes (False si fallo, o la tupla de listas).
+        Se desempaqueta en cursos, estudiantes, notas solo si no es False
+    hist: Retorno de loadHist (False si fallo, o la tupla de datos)
+    dataHist: Matriz [año, cantidad de estudiantes] para graficar
+    a, b, MAE: Pendiente, corte y error de la recta de prediccion. Se
+        calculan una sola vez y se reutilizan en consultas posteriores
+
+En las opciones 4 y 5 se arma una lista temporal de tuplas
+(valor*-1, indice en la EED) para ordenar de mayor a menor sin mover las
+3 listas originales. Se usan centinelas -1 para estudiantes sin notas.
+'''
 from func import *
 from plots import *
 menu = True
@@ -6,7 +34,7 @@ hist = None
 dataHist = None
 a,b,MAE = None, None, None
 while menu:
-    opt = validarL("Bienvenido al sistema, que deseas hacer?\n\n(1) Cargar notas\n(2) Eliminar un estudiante\n(3) Mayor nota de un estudiante\n(4) Ordenar estudiantes por promedio\n(5) Ordenar estudiantes por cantidad de cursos inscritos.\n(6) Prediccion de estudiantes\n(-1) Salir\n((7 DEBUGGEAR LOADER))\n",["1","2","3","4","5","6","7","-1"])
+    opt = validarL("Bienvenido al sistema, que deseas hacer?\n\n(1) Cargar notas\n(2) Eliminar un estudiante\n(3) Mayor nota de un estudiante\n(4) Ordenar estudiantes por promedio\n(5) Ordenar estudiantes por cantidad de cursos inscritos.\n(6) Prediccion de estudiantes\n(-1) Salir\n",["1","2","3","4","5","6","7"])
     #OPT SALIDA
     if opt == "-1":
         break
@@ -179,7 +207,6 @@ while menu:
             hist = loadHist(True)
             if hist:
                 años, cantEstu, cH = hist
-                print("iteraciones de cH", cH)
             else:
                 continue
             a,b,MAE,c,k,k1,k2 = tanteoBaj(años,cantEstu)
@@ -187,7 +214,7 @@ while menu:
             dataHist = list()
             for x in range(len(años)):
                 dataHist.append([años[x],cantEstu[x]])
-        #DEBUG: print(a,b,MAE,"llamadas a mae",c,"vueltas de while",k,"evaluaciones de menor error:",k1,"cambios de paso:",k2) #Debug
+        print(a,b,MAE,"llamadas a mae",c,"vueltas de while",k,"evaluaciones de menor error:",k1,"cambios de paso:",k2) #Debug
 
         #Pedir datos al usuario:
         while True:
@@ -217,15 +244,5 @@ while menu:
             print("Cantidad Y de estudiantes estimada:",int(round(yS[-1])))
             print("MAE de estudiantes:",MAE)
             print("EXITO: Archivo de prediccion generado exitosamente.")
-            
-    #DEBUGER
-    elif opt == "7":
-        loadNotes(True)
-        loadNotes(True)
-        loadNotes(True)
-        loadNotes(True)
-        loadNotes(True)
-        loadNotes(True)
-        loadNotes(True)
 
     print("\n")

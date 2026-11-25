@@ -1,6 +1,40 @@
 #Modulo para funciones y operaciones
+'''
+Modulo de funciones y operaciones de la practica 6.
+
+Parte 1: carga y guardado de notas_estudiantes.csv, busqueda, eliminacion,
+mayor nota, impresion de tablas y ordenamientos (burbuja y seleccion).
+Parte 2: carga de hist_matriculados.csv, regresion lineal, MAE y tanteo
+a la baja para hallar la recta que mejor se ajusta a los datos.
+
+Estructura de datos base (EED): 3 listas paralelas, cursos, estudiantes y
+notas. La posicion i de estudiantes corresponde a la fila notas[i].
+Notas especiales: -1 = curso cancelado, -2 = no matriculo.
+'''
+
+#PARTE 1
 
 def loadNotes(p=False,filename = './notas_estudiantes.csv'):
+    '''
+    Carga el archivo de notas en memoria y valida su estructura. Si una
+    sola comprobacion falla, rechaza el archivo completo.
+
+    Comprueba: que no haya cursos ni documentos repetidos o vacios, que la
+    cantidad de notas de cada fila coincida con la cantidad de cursos, que
+    las notas sean validas (-1, -2 o entre 0 y 5) y que la cantidad de filas
+    de notas coincida con la cantidad de estudiantes. Ignora lineas vacias
+    y tolera una sola coma sobrante al final de la linea.
+
+    Argumentos:
+        p: Booleano. Si es True imprime un mensaje de exito al cargar
+        filename: Ruta del archivo de notas
+
+    Retorna:
+        Tupla (cursos, estudiantes, notas) si todo salio bien, o False si
+        hubo algun error (el error se reporta con loadError). Por eso el
+        retorno se debe guardar primero en una variable antes de
+        desempaquetar.
+    '''
     try:
         cursos = list()
         estudiantes = list()
@@ -90,6 +124,25 @@ def loadNotes(p=False,filename = './notas_estudiantes.csv'):
 
 #loadHist Optimizado
 def loadHist(p=False, filename = './hist_matriculados.csv'):
+    '''
+    Carga el historico de matriculados (version OPTIMIZADA). Construye 2
+    listas simultaneamente para que sus indices se correspondan.
+
+    Para revisar años repetidos usa una tabla de 10000 casillas booleanas
+    donde cada año es su propia posicion, asi cada consulta cuesta 1 sola
+    comprobacion en lugar de recorrer la lista de años. A cambio ocupa
+    siempre 10000 casillas de memoria, por lo que solo vale la pena a
+    partir de unas 140 filas. Ignora lineas vacias, incompletas y el
+    encabezado.
+
+    Argumentos:
+        p: Booleano. Si es True imprime un mensaje de exito al cargar
+        filename: Ruta del archivo del historico
+
+    Retorna:
+        Tupla (años, csEst, c) donde c es la cantidad de consultas hechas a
+        la tabla de casillas, o False si hubo algun error.
+    '''
     #Contador de consultas a Años:
     c = 0
     #Crear tabla de casillas:
@@ -152,6 +205,22 @@ def loadHist(p=False, filename = './hist_matriculados.csv'):
 
 #LoadHist ineficiente
 def loadHistOG(p=False, filename = './hist_matriculados.csv'):
+    '''
+    Carga el historico de matriculados (version ORIGINAL sin optimizar).
+    Se conserva para comparar eficiencia con loadHist.
+
+    Para revisar años repetidos usa "not in" sobre la lista de años, asi que
+    en cada fila recorre todos los años ya cargados: con n datos hace
+    n*(n-1)/2 consultas (4950 con 100 datos, 499500 con 1000).
+
+    Argumentos:
+        p: Booleano. Si es True imprime un mensaje de exito al cargar
+        filename: Ruta del archivo del historico
+
+    Retorna:
+        Tupla (años, csEst, c) donde c es la cantidad de consultas hechas a
+        la lista de años, o False si hubo algun error.
+    '''
     #Contador de consultas a años:
     c = 0
     try:
@@ -208,6 +277,19 @@ def loadHistOG(p=False, filename = './hist_matriculados.csv'):
         return años, csEst, c
 
 def loadError(filen,texto="\n", linea = None):
+    '''
+    Funcion auxiliar para reportar errores al cargar archivos, evita repetir
+    el mismo bloque en cada comprobacion de los cargadores.
+
+    Argumentos:
+        filen: Nombre del archivo que fallo
+        texto: Descripcion del error especifico
+        linea: Linea del archivo donde esta el error (opcional). Si es None
+            el mensaje indica que el archivo esta corrupto o no existe
+
+    Retorna:
+        Siempre False, para que los cargadores lo devuelvan directamente.
+    '''
     if linea != None:
         print(f"ERROR: El archivo {filen} esta corrupto en la linea {linea}\n{texto}")
     else:
@@ -215,6 +297,17 @@ def loadError(filen,texto="\n", linea = None):
     return False
 
 def delElem(lista,indice):
+    '''
+    Elimina el elemento de una posicion modificando la lista original con
+    cortes, asi no hay que reasignar la variable en main.
+
+    Argumentos:
+        lista: Lista a modificar
+        indice: Posicion a eliminar. No acepta negativos
+
+    Retorna:
+        True si se elimino, False si el indice es inaccesible.
+    '''
     if indice > -1 and indice < len(lista):
         lista[indice:] = lista[indice+1:]
         return True
@@ -222,6 +315,20 @@ def delElem(lista,indice):
         return False
 
 def buscarId(lista,elem,r=False):
+    '''
+    Busqueda lineal de un elemento en una lista.
+
+    Argumentos:
+        lista: Lista donde se busca
+        elem: Elemento a buscar
+        r: Booleano. Por defecto (False) se detiene en la primera
+            coincidencia. Si es True recorre toda la lista porque puede
+            haber elementos repetidos
+
+    Retorna:
+        El indice si hubo una sola coincidencia, una lista de indices si
+        hubo varias (solo con r=True), o -1 si no hubo coincidencias.
+    '''
     indice = 0
     if r:
         indices = list()
@@ -244,6 +351,19 @@ def buscarId(lista,elem,r=False):
 
 #Validar si el input es valido recorriendo una lista o listas anidadas
 def validarL(strinput,datosvalidos=["si","no","s","n"],digito=None):
+    '''
+    Pide una entrada por teclado hasta que sea una de las opciones validas.
+    La entrada se convierte a minusculas antes de comparar.
+
+    Argumentos:
+        strinput: Texto que se muestra al pedir la entrada
+        datosvalidos: Lista de opciones validas. Puede contener strings o
+            listas anidadas de strings
+        digito: Si es verdadero, ademas exige que la entrada sea un digito
+
+    Retorna:
+        La entrada (string en minusculas) que paso la validacion.
+    '''
     invalido = True
     while invalido:
         opt = str(input(strinput)).lower()
@@ -362,6 +482,24 @@ def imprimir_tabla(tabla, ancho, encabezado=None):
         dividir_fila(ancho)
 
 def saveNotes(cursos, estudiantes, notas, p = False,filename = './notas_estudiantes.csv'):
+    '''
+    Guarda la estructura de datos en el archivo de notas, para que los
+    cambios (por ejemplo eliminar un estudiante) persistan al recargar.
+
+    Antes de escribir guarda el contenido original del archivo en una
+    variable; si ocurre algun error durante la escritura, restaura el
+    archivo y avisa al usuario.
+
+    Argumentos:
+        cursos: Lista de cursos (primera linea del archivo)
+        estudiantes: Lista de documentos (segunda linea del archivo)
+        notas: Lista de listas con las notas de cada estudiante
+        p: Booleano. Si es True imprime un mensaje de exito al guardar
+        filename: Ruta del archivo de notas
+
+    Retorna:
+        True si se guardo correctamente, False si hubo algun error.
+    '''
     try:
         #Repuesto en caso de error:
         rr = open(filename,"r", encoding='utf-8')
@@ -414,6 +552,18 @@ def saveNotes(cursos, estudiantes, notas, p = False,filename = './notas_estudian
         
 #Traducir la tabla de notas (-1 para Cancelado, -2 para No matriculo)
 def traducir(estudiantes,notas):
+    '''
+    Arma la tabla lista para imprimir, reemplazando las notas especiales por
+    texto: -1 por "Cancelada" y -2 por "No Matriculó".
+
+    Argumentos:
+        estudiantes: Lista de documentos de los estudiantes
+        notas: Lista de listas con las notas de cada estudiante
+
+    Retorna:
+        Lista de filas, cada una [estudiante, nota1, nota2, ...]. Las
+        estructuras originales no se modifican.
+    '''
     notesprint = list()
     i = 0
     for estudiante in estudiantes:
@@ -430,6 +580,18 @@ def traducir(estudiantes,notas):
     return notesprint
 
 def mayor(lista,r=True):
+    '''
+    Halla el mayor elemento de una lista recorriendola una sola vez.
+
+    Argumentos:
+        lista: Lista no vacia de elementos comparables
+        r: Booleano. Si es True tambien cuenta cuantas veces se repite el
+            mayor
+
+    Retorna:
+        Con r=True una tupla (mayor, veces que aparece); con r=False solo
+        el mayor.
+    '''
     nmayor = lista[0]
     c = 0
     for elemento in lista:
@@ -443,6 +605,17 @@ def mayor(lista,r=True):
     else: return nmayor
 
 def minimo(lista):
+    '''
+    Halla el menor elemento de una lista recorriendola una sola vez. Si los
+    elementos son tuplas, compara por el primer valor y desempata con los
+    siguientes.
+
+    Argumentos:
+        lista: Lista no vacia de elementos comparables
+
+    Retorna:
+        El menor elemento de la lista.
+    '''
     minimo = lista[0]
     for elemento in lista:
         if elemento < minimo:
@@ -451,6 +624,19 @@ def minimo(lista):
 
 #Bubble sort optimizado.
 def bubbleSort(lista):
+    '''
+    Ordena la lista de menor a mayor con burbuja optimizado: si en una
+    pasada no hubo intercambios, la lista ya esta ordenada y se detiene.
+    Modifica la lista original.
+
+    Argumentos:
+        lista: Lista de elementos comparables (por ejemplo tuplas
+            (valor, indice))
+
+    Retorna:
+        Tupla (lista ordenada, c) donde c es la cantidad de comparaciones
+        realizadas.
+    '''
     c = 0 #Contador de iteraciones.
     n = len(lista)
 
@@ -468,6 +654,18 @@ def bubbleSort(lista):
     return lista, c
 
 def selSort(lista):
+    '''
+    Ordena la lista de menor a mayor con ordenamiento por seleccion: fija
+    una posicion (division) y la intercambia con cualquier elemento menor
+    que encuentre a su derecha. Modifica la lista original.
+
+    Argumentos:
+        lista: Lista de elementos comparables (por ejemplo tuplas
+            (valor, indice))
+
+    Retorna:
+        La misma lista, ya ordenada.
+    '''
     division = 0
     while division < len(lista):
         for i in range(division + 1, len(lista)):
@@ -481,6 +679,19 @@ def selSort(lista):
 #PARTE 2
 
 def promediar(lista,r=None):
+    '''
+    Calcula el promedio de una lista de enteros.
+
+    Argumentos:
+        lista: Lista de numeros enteros. Si encuentra un valor que no es
+            entero imprime un error y termina
+        r: Cantidad de decimales a conservar. Si no se especifica, el
+            promedio se redondea a un entero
+
+    Retorna:
+        El promedio, 0 si la lista esta vacia, o None si hubo un valor
+        invalido.
+    '''
     total = 0
     promedio = 0
     if len(lista)>0:
@@ -499,6 +710,32 @@ def promediar(lista,r=None):
 
 #Tanteo a la baja con reduccion de rangos
 def tanteoBaj(años, csEst):
+    '''
+    Tanteo a la baja OPTIMIZADO para hallar la recta y = ax+b que minimiza
+    el MAE sobre los datos.
+
+    Optimizaciones: centra los años restandoles su media (asi a solo gira la
+    recta alrededor del centro) y usa un zoom: evalua 5 puntos alrededor del
+    centro (centro-rango, centro-rango/2, centro, centro+rango/2,
+    centro+rango) y, si el ganador no es un extremo, reduce el rango a la
+    mitad. Se detiene cuando los rangos de a y de p son menores a 0.001.
+    Como el candidato central siempre es la solucion actual, el MAE nunca
+    sube entre vueltas. Al final convierte p (b normalizada) en b con los
+    años reales.
+
+    Argumentos:
+        años: Lista de años (valores X)
+        csEst: Lista con la cantidad de estudiantes de cada año (valores Y)
+
+    Retorna:
+        Tupla (a, b, my, c, k, k1, k2):
+            a, b: pendiente y corte de la recta hallada (años reales)
+            my: MAE final
+            c: cantidad de llamadas a mae
+            k: vueltas del while
+            k1: veces que el centro se movio
+            k2: veces que el centro se quedo quieto (hace zoom)
+    '''
     #Contador de llamadas a MAE
     c = 0
     #Contador de iteraciones
@@ -513,17 +750,16 @@ def tanteoBaj(años, csEst):
 
     a = (csEst[-1] - csEst[0])/(años[-1] - años[0])
     p0 = promediar(csEst)
-    pAct = p0
+    minB = minimo(csEst)
+    maxB = mayor(csEst,False)
+    pAct = (minB + maxB) / 2
     my = mae(regresion(a, pAct, años), csEst)
     c+=1
 
     #Inicializar variables para tanteo en bajada por zoom
     rangoA,centroA = abs(a),a
-    minB = minimo(csEst)
-    maxB = mayor(csEst,False)
-    
     rangoB = (maxB - minB) / 2
-    centroB = (minB + maxB) / 2
+    centroB = pAct
     while rangoA>=0.001 or rangoB>=0.001:
         k+=1
         if rangoA >= 0.001:
@@ -547,7 +783,9 @@ def tanteoBaj(años, csEst):
                 k2+=1
             else:
                 k1+=1
+            print(my)
             my, centroA= ganador
+            print(my)
             if not (centroA == a1 or centroA == a5):
                 rangoA = rangoA/2
             if a != centroA:
@@ -587,6 +825,30 @@ def tanteoBaj(años, csEst):
 
 #tanteo a la baja INOPTIMO
 def tanteoBajOriginal(años, csEst):
+    '''
+    Tanteo a la baja ORIGINAL (sin optimizar). Se conserva para comparar
+    eficiencia con tanteoBaj.
+
+    Parte de a = Delta(csEst)/Delta(años) y b de la recta que pasa por el
+    ultimo punto. Define un paso de 1/10 del valor de a y de b (minimo
+    0.1). En cada vuelta evalua 8 combinaciones de (a +/- paso, b +/- paso)
+    y se queda con la de menor MAE; si ninguna mejora el error, reduce los
+    pasos a la mitad. Termina cuando ambos pasos son menores o iguales a
+    0.001.
+
+    Argumentos:
+        años: Lista de años (valores X)
+        csEst: Lista con la cantidad de estudiantes de cada año (valores Y)
+
+    Retorna:
+        Tupla (a, b, my, c, k, k1, k2):
+            a, b: pendiente y corte de la recta hallada
+            my: MAE final
+            c: cantidad de llamadas a mae
+            k: vueltas del while
+            k1: veces que se encontro un menor error
+            k2: veces que se cambio el paso
+    '''
     #Contador de llamadas a MAE
     c = 0
     #Contador de iteraciones
@@ -638,6 +900,18 @@ def tanteoBajOriginal(años, csEst):
 
 #Regresion lineal
 def regresion(a,b,xs):
+    '''
+    Evalua la recta y = ax+b para cada valor de X. Es generica para
+    reutilizarla en varios puntos de la parte 2.
+
+    Argumentos:
+        a: Pendiente de la recta
+        b: Corte de la recta con el eje Y
+        xs: Lista de valores X
+
+    Retorna:
+        Lista con un valor Y por cada X.
+    '''
     ys = list()
     for x in xs:
         ys.append(a*x+b)
@@ -645,6 +919,17 @@ def regresion(a,b,xs):
 
 #MAE
 def mae(tanteo, csEst):
+    '''
+    Calcula el error absoluto medio (MAE): promedio de la diferencia en
+    valor absoluto entre cada Y tanteado y su Y real gemelo.
+
+    Argumentos:
+        tanteo: Lista de Y obtenidas con la recta tanteada
+        csEst: Lista de Y reales
+
+    Retorna:
+        El MAE, o None si las listas no tienen el mismo tamaño.
+    '''
     if len(tanteo) == len(csEst):
         error = 0
         for i in range(len(tanteo)):
@@ -653,4 +938,3 @@ def mae(tanteo, csEst):
     else:
         print("ERROR: Y tanteados no coincide con Y reales, abortando...")
         return
-        

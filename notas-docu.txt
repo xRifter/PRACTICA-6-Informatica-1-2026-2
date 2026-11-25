@@ -8,7 +8,7 @@ Se decidio que en lugar de utilizar sublistas, la lista de pares estara compuest
 
 La funcion load_notes() retornara 3 listas en caso de ser exitosa, y un False en caso de presentar error, por tanto en main.py se debe de almacenar en una  variable para comprobar que no sea False. En caso de que ocurran errores durante la ejecucion de la funcion y para evitar tener que comprobar en todos los casos que se cierre el archivo aun si hay un return, se utilizara un gestor de contexto with para gestionar el cerrado. 
 
-La funcion ignorara completamente las lineas vacias, tolerara una sola coma sobrante pero no espacios vacios. La funcion debera comprobar: Que no haya cursos repetidos, que no haya documentos repetidos, que la cantidad  de filas con notas corresponda a la cantidad de documentos de identidad, y que la cantidad de notas en todas las filas corresponda a la cantidad de cursos. Asimismo debe de limpiar y comprobar que las filas de cursos y de documentos cumplan el formato especificado. Respecto a la lista de notas asociada a cada estudiante, se convertiran en numero directamete al cargar para validar que el valor sea valido (-1,-2 o del rango 0 - 5 perteneciente a los reales), evitando tener que convertiro de nuevo cada que se vayan a comprobar los archivos o realizar operaciones, el resto de variables se cargaran como strings. La funcion rechaza el archivo completo si una comprobacion falla; se considero inicialmente que la funcion asumiera los datos faltantes en un intento de corregir el archivo (ej: estudiantes repetidos pero cantidad de filas coincide, o espacios en blancos leidos como cancelacion de curso), sin embargo consideramos que la ambiguedad de estas correciones comprometerian la integridad de los datos, por lo que elegimos mejor un rechazo completo si no se cumple la estructura. la funcion recibira un parametro booleano que indicara si se imprime o no un mensaje “EXITO: Archivo notas_estudiantes.csv importado exitosamente!"
+La funcion ignorara completamente las lineas vacias, tolerara una sola coma sobrante pero no espacios vacios. La funcion debera comprobar: Que no haya cursos repetidos, que no haya documentos repetidos, que la cantidad  de filas con notas corresponda a la cantidad de documentos de identidad, y que la cantidad de notas en todas las filas corresponda a la cantidad de cursos. Asimismo debe de limpiar los espacios sobrantes y comprobar que las filas de cursos y de documentos no tengan valores vacios ni repetidos. Respecto a la lista de notas asociada a cada estudiante, se convertiran en numero directamete al cargar para validar que el valor sea valido (-1,-2 o del rango 0 - 5 perteneciente a los reales), evitando tener que convertiro de nuevo cada que se vayan a comprobar los archivos o realizar operaciones, el resto de variables se cargaran como strings. La funcion rechaza el archivo completo si una comprobacion falla; se considero inicialmente que la funcion asumiera los datos faltantes en un intento de corregir el archivo (ej: estudiantes repetidos pero cantidad de filas coincide, o espacios en blancos leidos como cancelacion de curso), sin embargo consideramos que la ambiguedad de estas correciones comprometerian la integridad de los datos, por lo que elegimos mejor un rechazo completo si no se cumple la estructura. la funcion recibira un parametro booleano que indicara si se imprime o no un mensaje “EXITO: Archivo notas_estudiantes.csv importado exitosamente!"
 
 Al momento de escribir load_notes, se noto que por la cantidad de comprobaciones necesarias para cargar un archivo, en los casos de error se repite mucho la misma estructura, por eso se creo una funcion auxiliar reutilizable para reportar errores al cargar archivos llamada load_error(), que recibira el nombre del archivo, el error especifico y opcionalmente la linea donde esta corrupto, e indicara en consola al usuario que ese archivo esta corrupto, devolviendo False para el retorno de load_notes().
 
@@ -20,11 +20,9 @@ La funcion retornara True en caso de tener exito y False si el elemento es inacc
 
 Para la funcion de eliminacion se opto por no permitir que el usuario continue eliminando estudiantes si la cantidad de estudiantes es 1, para no dejar vacio el archivo porque el cargador lo rechazaria. Se decidio que la funcion seria persistente en lugar de solo eliminar variables en memoria para que se mantenga al recargar el archivo. Para ello se creo una funcion save_notes que se encarga de actualizar el documento despues de eliminar algun estudiante. Al iniciarse, se guarda primero el documento sin modificar en una variable y en caso de que haya algun error de ejecucion, se restaurara el archivo y se indicara al usuario que no se pudo realizar el guardado.
 
-Para la funcion de busqueda, se considero el algoritmo de busqueda lineal y busqueda binaria. El problema con la busqueda binaria a pesar de ser mas eficiente es que necesita que los datos esten ordenados, cosa que para documentos de identidad seria mas ineficiente pues no vienen ordenados, por lo que se opto por la lineal: por defecto, el algoritmo recorrera la lista en orden deteniendose si encuentra una coincidencia; Un parametro "r" (que por defecto esta desactivado) indicara si en la lista pueden haber elementos repetidos, en cuyo caso recorrera la lista completa sin parar e ira agregando las coincidencias a una lista que se retornara. Por diseño, no pueden haber documentos repetidos, por lo que la primera coincidencia retornara el indice del estudiante a eliminar, pero como se reutilizo para la funcion de mayor nota, se le agrego este "modo"; Si no se encuentran coincidencias, retornara -1.
+Para la funcion de busqueda, se considero el algoritmo de busqueda lineal y busqueda binaria. El problema con la busqueda binaria a pesar de ser mas eficiente es que necesita que los datos esten ordenados, cosa que para documentos de identidad seria mas ineficiente pues no vienen ordenados, por lo que se opto por la lineal: por defecto, el algoritmo recorrera la lista en orden deteniendose si encuentra una coincidencia; Un parametro "r" (que por defecto esta desactivado) indicara si en la lista pueden haber elementos repetidos, en cuyo caso recorrera la lista completa sin parar e ira agregando las coincidencias a una lista temporal; al final retornara el indice directamente si solo hubo una coincidencia, o la lista de indices si hubo varias. Por diseño, no pueden haber documentos repetidos, por lo que la primera coincidencia retornara el indice del estudiante a eliminar, pero como se reutilizo para la funcion de mayor nota, se le agrego este "modo"; Si no se encuentran coincidencias, retornara -1.
 
 Para obtener la mayor nota de los estudiantes se creo una funcion auxiliar simple que recorre un objeto iterable, compara sus elementos uno a uno reemplazando dinamicamente el mayor; al final de su ejecucion, retornara el mayor elemento de la lista y la cantidad de veces (c) que se repite.El programa imprimira la mayor nota del estudiante y el curso donde la saco y en caso de que c sea mayor a 1, la funcion de busqueda se llamara en modo "r", retornando la lista de cursos que comparten esta nota para mostrarla al usuario. Si el estudiante solo tiene notas negativas (materias canceladas o no matriculadas), el sistema indicara que no hay materias matriculadas.
-
-Se agrego un modo debug para probar casos de prueba de load_notes y a futuro save_notes y las listas de orden, y para probar la funcion de mayor nota con filas especiales (Fila negativa, Fila en 0, Fila de empates)
 
 Para imprimir la estructura de datos se reutilizo la funcion imprimir_tabla de la practica 5. 
 
@@ -35,8 +33,6 @@ Para la funcionalidad de ordenar a los estudiantes por promedios, se decidio tot
 Para la funcionalidad de ordenar a los estudiantes dependiendo de la cantidad de materias cursadas, se decidio totalizar la cantidad de cursos en una variable k y restarle una unidad por cada materia cancelada o No matriculada de el estudiante para poder diferenciar entre estudiantes que no tienen cursos por no haber matriculado nada de los que no tenian cursos por cancelaciones y/o falta de matricula (Estudiantes sin historial academico).
 
 Para ambos casos se utilizo una estructura similar con centinelas -1 para los casos especiales.
-
-Se decidio optimizar la funcion loadNotes para evitar utilizar (not in) de forma que utilice una matriz y compare solamente los documentos con los mismos k ultimos digitos. la otra optimizada sera la funcion de tanteo de la parte 2. Primero se hara en tanteo de busqueda cuesta abajo, luego se buscara como optimizar.
 
 PARTE 2
 
@@ -138,7 +134,7 @@ Con 1000 entradas while se repite unas 61 veces, se llama 489 veces a mae, 41 ev
 
 Para optimizar la funcion, se decidio primero procesar la lista de los años antes del bucle para reducir y centrar los posibles a,b (Pues la mayoria de numeros son cercanos al 2000 para arriba, lo que hace que cualquier cambio minimo en a mueva la recta). Anteriormente se considero utilizar normalizacion restandole a todos los años el primero de la lista para la funcion inoptimizada pero se descarto para evitar la pasada extra de una funcionalidad que seria replanteada: siguiendo una logica similar se normalizaran los años utilizando la media resultante de una pasada por la lista (año = año-media). De esta forma, a solo girara la recta alrededor del centro.
 
-En cuanto al tanteo, se opto por utilizar un zoom para acortar el rango de busqueda: La funcion tomara el valor inicial como centro y hara un radio de 5 puntos alrededor de este centro (restando centro-radio), luego evaluara el MAE de los 5 puntos. Se considero hacer un criterio de parada dinamico que cambiara con la cantidad de estudiantes, pero la optimizacion fue muy poca por lo que se opto por definir que el zoom se detendria cuando el rango de busqueda fuera de menos de 0.001. Para inicializar las variables a,b para el zoom, se utilizo la misma pendiente de Delta(csEst)/Delta(años), y como años esta normalizada en la media, b se inicializara en el valor de x=0 en la media de años. La version de b normalizada se llama p en el codigo, pero al momento de retornar, la funcion de tanteo volvera a convertir a p al b normal con los valores reales de el archivo.  
+En cuanto al tanteo, se opto por utilizar un zoom para acortar el rango de busqueda: La funcion tomara el valor inicial como centro y hara un radio de 5 puntos alrededor de este centro (restando centro-radio), luego evaluara el MAE de los 5 puntos. Se considero hacer un criterio de parada dinamico que cambiara con la cantidad de estudiantes, pero la optimizacion fue muy poca por lo que se opto por definir que el zoom se detendria cuando el rango de busqueda fuera de menos de 0.001. Para inicializar las variables a,p para el zoom, se utilizo la misma pendiente de Delta(csEst)/Delta(años) para a; como los años estan normalizados con la media, p es el valor de la recta en x=0 (el año promedio), por lo que se inicializa en el punto medio entre el minimo y el maximo de csEst. El MAE inicial y el zoom de a y de p parten de ese mismo punto, de modo que el candidato central siempre es la solucion actual y solo se reemplaza por otro con igual o menor error, por lo que el MAE nunca sube entre vueltas. Inicialmente el MAE inicial se calculaba con la media de csEst mientras que el zoom de p se centraba en el punto medio, lo que hacia que el error subiera en las primeras iteraciones (ej: de 4.07 a 9.2 con 1000 datos); se corrigio unificando el punto de partida. Al retornar, p se convierte de nuevo en b con los años reales del archivo.
 
 Ver Optimizada:
 #Tanteo a la baja con reduccion de rangos
@@ -232,8 +228,8 @@ def tanteoBaj(años, csEst):
 
 Mejoria del MAE con tanteo optimizado (hist_matriculados_100): 
 
-4.322403100775194
-4.322403100775194
+4.75093023255814
+4.75093023255814
 4.75093023255814
 4.75093023255814
 4.75093023255814
@@ -261,8 +257,8 @@ Para 100 entradas se llama a mae aproximadamente 146 veces, while se repite 17 v
 
 Mejoria del MAE con tanteo optimizado (hist_matriculados_1000): 
 
-4.0756354430379735
-4.0756354430379735
+9.20868860759494
+9.20868860759494
 9.20868860759494
 9.20868860759494
 9.20868860759494
@@ -284,7 +280,7 @@ Mejoria del MAE con tanteo optimizado (hist_matriculados_1000):
 4.004953945806963
 4.004953945806963
 
-Con 1000 entradas while se repite unas 21 veces, se llama 161 veces a mae, 21 evaluaciones de menor error y 27 cambios de paso. valores a,b = 1.82, -3597.42
+Con 1000 entradas while se repite unas 21 veces, se llama 161 veces a mae, 5 evaluaciones de menor error y 27 cambios de paso. valores a,b = 1.82, -3597.42. Aunque se gana mucho en eficiencia del programa, entre mayor cantidad de datos se puede perder un poco de precision.
 
 Para la segunda optimizacion, se decidio optimizar load_hist aprovechando que existe un rango de años validos entre 0-9999, porque la version original utiliza not in al momento de agregar años a la lista. 
 Version original:
